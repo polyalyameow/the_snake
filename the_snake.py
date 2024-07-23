@@ -134,11 +134,22 @@ class Snake(GameObject):
         head_x, head_y = self.positions[0]
         return pygame.Rect(head_x, head_y, GRID_SIZE, GRID_SIZE)
 
+    def body_collide(self):
+        head_rect = self.get_head_rect()
+        for pos in self.positions[1:]:
+            pos_rect = pygame.Rect(pos[0], pos[1], GRID_SIZE, GRID_SIZE)
+            if head_rect.colliderect(pos_rect):
+                return True
+        return False
+
     # Сбрасывает змейку в начальное состояние
     def reset(self):
         self.length = 1
-        self.position = [self.position]
-        self.direction = choice([UP, DOWN, LEFT, RIGHT])
+        # self.positions = [self.position]
+        # self.direction = choice([UP, DOWN, LEFT, RIGHT])
+        self.positions = [(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)]
+    # Set the initial direction
+        self.direction = RIGHT
 
 
 def handle_keys(game_object):
@@ -168,11 +179,15 @@ def main():
         handle_keys(snake)
         snake.update_direction()
         snake.move()
-        screen.fill((0, 0, 0))
+
         if snake.get_head_rect().colliderect(apple.get_rect()):
             snake.length += 1
             apple.reposition()
 
+        if snake.body_collide():
+            snake.reset()
+
+        screen.fill((0, 0, 0))
         apple.draw()
         snake.draw()
 
