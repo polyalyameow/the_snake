@@ -42,7 +42,8 @@ clock = pygame.time.Clock()
 # Тут опишите все классы игры.
 class GameObject:
     def __init__(self):
-        self.position = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
+        self.position = (SCREEN_WIDTH // 2 - GRID_SIZE // 2,
+                         SCREEN_HEIGHT // 2 - GRID_SIZE // 2)
         self.body_color = None
 
     def draw(self):
@@ -74,6 +75,7 @@ class Snake(GameObject):
         self.positions = [self.position]
         self.direction = RIGHT
         self.next_direction = None
+        self.last = None
 
     # Обновляет направление движения змейки
     def update_direction(self):
@@ -85,13 +87,18 @@ class Snake(GameObject):
     def move(self):
         head_x, head_y = self.get_head_position()
         direction_x, direction_y = self.direction
-        new_head = (head_x + direction_x, head_y + direction_y)
+        new_head = (
+            head_x + direction_x * GRID_SIZE,
+            head_y + direction_y * GRID_SIZE
+        )
 
+        # Wrap around the screen edges
         new_head_x, new_head_y = new_head
-        new_head_x = new_head_x % (SCREEN_WIDTH // GRID_SIZE)
-        new_head_y = new_head_y & (SCREEN_HEIGHT // GRID_SIZE)
-        new_head = (new_head_x * GRID_SIZE, new_head_y * GRID_SIZE)
+        new_head_x = new_head_x % SCREEN_WIDTH
+        new_head_y = new_head_y % SCREEN_HEIGHT
 
+        new_head = (new_head_x, new_head_y)
+        self.last = self.positions[-1] if len(self.positions) > 1 else None
         self.positions.insert(0, new_head)
 
         if len(self.positions) > self.length:
@@ -109,9 +116,9 @@ class Snake(GameObject):
         pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
     # Затирание последнего сегмента
-        # if self.last:
-        #     last_rect = pygame.Rect(self.last, (GRID_SIZE, GRID_SIZE))
-        #     pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+        if self.last:
+            last_rect = pygame.Rect(self.last, (GRID_SIZE, GRID_SIZE))
+            pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
 
     # Возвращает позицию головы змейки
     def get_head_position(self):
@@ -146,15 +153,15 @@ def main():
     snake = Snake()
 
     while True:
-        clock.tick(SPEED)
-        apple.draw()
         handle_keys(snake)
-        snake.draw()
         snake.update_direction()
-        pygame.display.update()
+        snake.move()
+        screen.fill((0, 0, 0))
+        apple.draw()
+        snake.draw()
 
-        # Тут опишите основную логику игры.
-        # ...
+        pygame.display.update()
+        clock.tick(SPEED)
 
 
 if __name__ == '__main__':
