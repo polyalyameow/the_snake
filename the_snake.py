@@ -62,11 +62,17 @@ class GameObject:
         """Пустая функция-шаблон для отрисовки элементов игры."""
         pass
 
-    def draw_cell(self, position):
+    def draw_cell(self, position, clear=False):
         """Отрисовывет клетку"""
-        rect = pygame.Rect(position, (GRID_SIZE, GRID_SIZE))
-        pygame.draw.rect(screen, self.body_color, rect)
-        pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
+        x, y = position
+        rect = pygame.Rect(x, y, GRID_SIZE, GRID_SIZE)
+        if clear:
+            pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, rect)
+        else:
+            pygame.draw.rect(screen, self.body_color, rect)
+            pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
+
+        return rect
 
 
 class Apple(GameObject):
@@ -79,8 +85,7 @@ class Apple(GameObject):
     """
 
     def __init__(self):
-        super().__init__()
-        self.body_color = APPLE_COLOR
+        super().__init__(position=SCREEN_CENTER, body_color=APPLE_COLOR)
         self.position = self.randomize_position()
 
     def randomize_position(self):
@@ -112,8 +117,7 @@ class Snake(GameObject):
     """
 
     def __init__(self):
-        super().__init__()
-        self.body_color = SNAKE_COLOR
+        super().__init__(position=SCREEN_CENTER, body_color=SNAKE_COLOR)
         self.length = 1
         self.positions = [self.position]
         self.direction = RIGHT
@@ -149,30 +153,24 @@ class Snake(GameObject):
 
     def draw(self):
         """Отрисовывает змею на экране."""
-        for position in self.positions[:-1]:
+
+        for position in self.positions:
             self.draw_cell(position)
 
         # Отрисовка головы змейки
-        self.draw_cell(self.positions[0])
+        # self.draw_cell(self.positions[0])
 
         # Затирание последнего сегмента
         if self.last:
-            last_rect = pygame.Rect(self.last, (GRID_SIZE, GRID_SIZE))
-            pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
+            self.draw_cell(self.last, clear=True)
 
-    # Возвращает позицию головы змейки
     def get_head_position(self):
         """Возвращает позицию головы змеи."""
         return self.positions[0]
 
-    def body_collide(self):
-        """Проверяет коллизию головы змеи с телом."""
-        head_pos = self.get_head_position()
-        return head_pos in self.positions[1:]
-
-    def apple_on_snake(self, apple_position):
-        """Проверяет, находится ли позиция яблока на теле змеи."""
-        return apple_position in self.positions[1:]
+    def body_collide(self, item):
+        """Проверяет коллизию переданного в параметр предмета с телом змеи"""
+        return item in self.positions[1:]
 
     def reset(self):
         """Возвращает змею в начальное состояние"""
@@ -205,7 +203,7 @@ def handle_keys(game_object):
 
 def needed_reposition(snake, apple):
     """Меняет положение яблока, если яблоко оказывается на теле змеи."""
-    while snake.apple_on_snake(apple.position):
+    while snake.body_collide(apple.position):
         apple.reposition()
 
 
@@ -228,10 +226,10 @@ def main():
             apple.reposition()
             needed_reposition(snake, apple)
 
-        if snake.body_collide():
+        if snake.body_collide(snake.get_head_position()):
             snake.reset()
 
-        screen.fill((0, 0, 0))
+        screen.fill(BOARD_BACKGROUND_COLOR)
         apple.draw()
         snake.draw()
 
