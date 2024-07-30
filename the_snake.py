@@ -8,10 +8,7 @@ GRID_SIZE = 20
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 
-SCREEN_CENTER = (
-    (SCREEN_WIDTH // 2 // GRID_SIZE) * GRID_SIZE,
-    (SCREEN_HEIGHT // 2 // GRID_SIZE) * GRID_SIZE
-)
+SCREEN_CENTER = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
 
 # Направления движения:
 UP = (0, -1)
@@ -144,21 +141,16 @@ class Snake(GameObject):
         new_head_y = new_head_y % SCREEN_HEIGHT
 
         new_head = (new_head_x, new_head_y)
-        self.positions.insert(0, new_head)
 
-        if len(self.positions) > self.length:
+        if self.length == len(self.positions):
             self.last = self.positions.pop()
-        else:
-            self.last = None
+
+        self.positions.insert(0, new_head)
 
     def draw(self):
         """Отрисовывает змею на экране."""
-
-        for position in self.positions:
-            self.draw_cell(position)
-
         # Отрисовка головы змейки
-        # self.draw_cell(self.positions[0])
+        self.draw_cell(self.get_head_position())
 
         # Затирание последнего сегмента
         if self.last:
@@ -221,15 +213,14 @@ def main():
         snake.update_direction()
         snake.move()
 
-        if snake.get_head_position() == apple.position:
+        if snake.body_collide(snake.get_head_position()):
+            screen.fill(BOARD_BACKGROUND_COLOR)
+            snake.reset()
+        elif snake.get_head_position() == apple.position:
             snake.length += 1
             apple.reposition()
             needed_reposition(snake, apple)
 
-        if snake.body_collide(snake.get_head_position()):
-            snake.reset()
-
-        screen.fill(BOARD_BACKGROUND_COLOR)
         apple.draw()
         snake.draw()
 
